@@ -25,6 +25,8 @@ __status__ = "Development"
 class Maze(unittest.TestCase):
     MAZE_SIZE_X = 50
     MAZE_SIZE_Y = 50
+    MIN_MAZE_SIZE_X = 2
+    MIN_MAZE_SIZE_Y = 2
     LEAVE_OUT_X_1 = 0
     LEAVE_OUT_X_2 = 1
     LEAVE_OUT_Y_1 = 2
@@ -35,6 +37,9 @@ class Maze(unittest.TestCase):
     WALL_EAST = 8
 	MazeArray = [][]
 	
+    """
+        Constructor
+    """
 	def __init__(self):
 		# The complete maze as array
 		MazeArray = [[0 for x in range(MAZE_SIZE_X)] for y in range(MAZE_SIZE_Y)]
@@ -55,40 +60,53 @@ class Maze(unittest.TestCase):
 	def createRandomMaze(self):				
 		__createRandomMaze(0, MAZE_SIZE_X, 0, MAZE_SIZE_Y)
 		
-		
     """
         Create a random maze
 		private sub routine
     """
-    def __createRandomMaze(self, chamberMinX, chamberMaxX, chamberMinY, chamberMaxY):				
-		wallX = randint(1, MAZE_SIZE_X-1)
-		wallY = randint(1, MAZE_SIZE_Y-1)
+    def __createRandomMaze(self, chamberMinX, chamberMaxX, chamberMinY, chamberMaxY):
+		# check minimum size of chamber
+		if (chamberMaxX - chamberMinX) < MIN_MAZE_SIZE_X:
+			return
+
+		# check minimum size of chamber
+		if (chamberMaxY - chamberMinY) < MIN_MAZE_SIZE_Y:
+			return
+
+		wallX = randint(chamberMinX+1, chamberMaxX-1)
+		wallY = randint(chamberMinY+1, chamberMaxY-1)
 
 		# select a number between 0 and 3
 		leaveOut = randint(0, 3))
 		
 		# hole in the wall
-		firstHole = randint(0, wallX-1)
-		secondHole = randint(wallX, MAZE_SIZE_X-1)
+		firstHole = randint(chamberMinX, wallX-1)
+		secondHole = randint(wallX, chamberMaxX-1)
 		
-		for x in range(MAZE_SIZE_X-1):
+		for x in range(chamberMaxX-1):
 			if (x < wallX and if leaveOut != LEAVE_OUT_X_1 and x != firstHole) or (x >= wallX and if leaveOut != LEAVE_OUT_X_2 and x != secondHole): 
 				MazeArray[x][wallY] = MazeArray[x][wallY] | EXIT_SOUTH 
 				MazeArray[x][wallY+1] = MazeArray[x][wallY+1] | EXIT_NORTH
 
 		# hole in the wall
-		firstHole = randint(0, wallY-1)
-		secondHole = randint(wallY, MAZE_SIZE_Y-1)
+		firstHole = randint(chamberMinY, wallY-1)
+		secondHole = randint(wallY, chamberMaxY-1)
 				
-		for y in range(MAZE_SIZE_Y-1):
+		for y in range(chamberMaxY-1):
 			if (y < wallY and if leaveOut != LEAVE_OUT_Y_1 and x != firstHole) or (y >= wallY and if leaveOut != LEAVE_OUT_Y_2 and x != secondHole): 
 				MazeArray[wallX][y] = MazeArray[wallX][y] | EXIT_WEST 
 				MazeArray[x][wallY-1] = MazeArray[x][wallY-] | EXIT_EAST
 					
-		
-		
+		__createRandomMaze(chamberMinX, wallX, chamberMinY, wallY)		# Quarter 0
+		__createRandomMaze(wallX, chamberMaxX, chamberMinY, wallY)		# Quarter 1
+		__createRandomMaze(wallX, chamberMaxX, wallY, chamberMaxY)		# Quarter 2
+		__createRandomMaze(chamberMinX, wallX, wallY, chamberMaxY)		# Quarter 3
 
-		
-		
-		
-		
+  """
+    Test creating persons
+  """
+  def test_createMaze(self):
+	createRandomMaze()
+	
+if __name__ == '__main__':
+    unittest.main()		
