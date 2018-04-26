@@ -7,7 +7,7 @@
 
 from random import randint
 import unittest
-import logging, sys
+import logging
 import sys
 import pickle
 import tempfile
@@ -15,6 +15,7 @@ from DeadEnd import DeadEnd
 from Entrance import Entrance
 import Globals as gl
 from _overlapped import NULL
+from sympy.stats.tests.test_continuous_rv import test_difficult_univariate
 
 __author__ = "Sven Eggert"
 __copyright__ = "Copyright 2018, Egertiko Designs"
@@ -36,6 +37,10 @@ class Maze(unittest.TestCase):
     SearchMazeArray = ()
     SearchMazeList = []
     Entrances = []
+    __numberOfLevels = 0        # The number of levels of the maze
+    __difficulty = 0            # The difficulty of the maze (0..1)
+    __maze_size_x = 0           # the size of the maze in x-direction
+    __maze_size_y = 0           # the size of the maze in y-direction
     
     """
         Constructor
@@ -45,24 +50,43 @@ class Maze(unittest.TestCase):
 
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
         
-        # The complete maze as array
-        self.MazeArray = [[0 for x in range(gl.MAZE_SIZE_X)] for y in range(gl.MAZE_SIZE_Y)]
-
-        # Wall to the north and south
-        for x in range(gl.MAZE_SIZE_X):
-            self.MazeArray[x][0] = gl.WALL_NORTH 
-            self.MazeArray[x][gl.MAZE_SIZE_Y-1] = gl.WALL_SOUTH
-
-        # Wall to the west and east
-        for y in range(gl.MAZE_SIZE_Y):
-            self.MazeArray[0][y] = self.MazeArray[0][y] | gl.WALL_WEST 
-            self.MazeArray[gl.MAZE_SIZE_X-1][y] = self.MazeArray[gl.MAZE_SIZE_X-1][y] | gl.WALL_EAST
-
     """
         Create a random maze
+        
+    
+        Args:
+            difficulty: The difficulty of the maze (0..1). It defines the number of levels of the maze 
+        
+        Returns:
+            Nothing
+        
+        Raises:
+            Nothing
+
     """
-    def createRandomMaze(self):                
-        self.__createRandomMaze(0, gl.MAZE_SIZE_X-1, 0, gl.MAZE_SIZE_Y-1)
+    def createRandomMaze(self, difficulty):
+        self.__difficulty = difficulty
+        self.__numberOfLevels = gl.MIN_MAZE_LEVEL + int((gl.MAX_MAZE_LEVEL - gl.MIN_MAZE_LEVEL) * difficulty)               
+
+        self.__maze_size_x = gl.MIN_MAZE_SIZE_X + int((gl.MAX_MAZE_SIZE_X - gl.MIN_MAZE_SIZE_X) * difficulty)
+        self.__maze_size_y = self.__maze_size_x
+        
+        print("Maze size", self.__maze_size_x, self.__maze_size_y)
+
+        # The complete maze as array
+        self.MazeArray = [[0 for x in range(self.__maze_size_x)] for y in range(self.__maze_size_y)]
+
+        # Wall to the north and south
+        for x in range(self.__maze_size_x):
+            self.MazeArray[x][0] = gl.WALL_NORTH 
+            self.MazeArray[x][self.__maze_size_y-1] = gl.WALL_SOUTH
+
+        # Wall to the west and east
+        for y in range(self.__maze_size_y):
+            self.MazeArray[0][y] = self.MazeArray[0][y] | gl.WALL_WEST 
+            self.MazeArray[self.__maze_size_x-1][y] = self.MazeArray[self.__maze_size_x-1][y] | gl.WALL_EAST
+
+        self.__createRandomMaze(0, self.__maze_size_x-1, 0, self.__maze_size_y-1)
 
     """
         Save the random maze
@@ -100,7 +124,7 @@ class Maze(unittest.TestCase):
 
     """
     def __findPathInMaze(self, entranceX, entranceY, entranceFrom):
-        self.SearchMazeArray = [[0 for x in range(gl.MAZE_SIZE_X)] for y in range(gl.MAZE_SIZE_Y)]
+        self.SearchMazeArray = [[0 for x in range(self.__maze_size_x)] for y in range(self.__maze_size_y)]
         deadEnds = []
         
         # walk through the maze
@@ -126,9 +150,9 @@ class Maze(unittest.TestCase):
         
         pace = pace + 1
 
-        if (actualRoom & gl.WALL_EAST) == 0 and gone != gl.GONE_WEST and x < gl.MAZE_SIZE_X-1:
+        if (actualRoom & gl.WALL_EAST) == 0 and gone != gl.GONE_WEST and x < self.__maze_size_x-1:
             self.__searchPathThroughMazeV2(x + 1, y, pace, gl.GONE_EAST, deadEnds)
-        if (actualRoom & gl.WALL_SOUTH) == 0 and gone != gl.GONE_NORTH and y < gl.MAZE_SIZE_Y-1:
+        if (actualRoom & gl.WALL_SOUTH) == 0 and gone != gl.GONE_NORTH and y < self.__maze_size_y-1:
             self.__searchPathThroughMazeV2(x, y + 1, pace, gl.GONE_SOUTH, deadEnds)
         if (actualRoom & gl.WALL_WEST) == 0 and gone != gl.GONE_EAST and x > 0:
             self.__searchPathThroughMazeV2(x - 1, y, pace, gl.GONE_WEST, deadEnds)
@@ -186,28 +210,28 @@ class Maze(unittest.TestCase):
         
         # Entry from North
         y = 0
-        for x in range(0,gl.MAZE_SIZE_X):
+        for x in range(0,self.__maze_size_x):
             deadEnds = self.__findPathInMaze(x,y, gl.GONE_NORTH)
             entrance = Entrance(x, y, gl.GONE_NORTH, deadEnds)
             entrances.append(entrance)
 
         # Entry from South
-        y = gl.MAZE_SIZE_Y - 1;
-        for x in range(0,gl.MAZE_SIZE_X):
+        y = self.__maze_size_y - 1;
+        for x in range(0,self.__maze_size_x):
             deadEnds = self.__findPathInMaze(x,y, gl.GONE_SOUTH)
             entrance = Entrance(x, y, gl.GONE_SOUTH, deadEnds)
             entrances.append(entrance)
         
         # Entry from West
         x = 0;
-        for y in range(0,gl.MAZE_SIZE_Y):
+        for y in range(0,self.__maze_size_y):
             deadEnds = self.__findPathInMaze(x,y, gl.GONE_WEST)
             entrance = Entrance(x, y, gl.GONE_NORTH, deadEnds)
             entrances.append(entrance)
 
         # Entry from South
         x = gl.MAZE_SIZE_X - 1;
-        for y in range(0,gl.MAZE_SIZE_Y):
+        for y in range(0,self.__maze_size_y):
             deadEnds = self.__findPathInMaze(x,y, gl.GONE_SOUTH)
             entrance = Entrance(x, y, gl.GONE_NORTH, deadEnds)
             entrances.append(entrance)
@@ -220,11 +244,11 @@ class Maze(unittest.TestCase):
     """
     def __createRandomMaze(self, chamberMinX, chamberMaxX, chamberMinY, chamberMaxY):        
         # check minimum size of chamber
-        if (chamberMaxX - chamberMinX) < gl.MIN_MAZE_SIZE_X:
+        if (chamberMaxX - chamberMinX) < self.__maze_size_x:
             return
 
         # check minimum size of chamber
-        if (chamberMaxY - chamberMinY) < gl.MIN_MAZE_SIZE_Y:
+        if (chamberMaxY - chamberMinY) < self.__maze_size_y:
             return
 
         # Create two random walls
@@ -246,7 +270,7 @@ class Maze(unittest.TestCase):
         for x in range(chamberMinX,chamberMaxX+1): # 0..9
             if (x <= wallX and x != firstHole) or (x > wallX and x != secondHole): 
                 self.MazeArray[x][wallY] = self.MazeArray[x][wallY] + gl.WALL_SOUTH
-                if wallY < gl.MAZE_SIZE_Y:
+                if wallY < self.__maze_size_x:
                     self.MazeArray[x][wallY+1] = self.MazeArray[x][wallY+1] + gl.WALL_NORTH
 
         # hole in the wall
@@ -258,7 +282,7 @@ class Maze(unittest.TestCase):
         for y in range(chamberMinY,chamberMaxY+1):
             if (y <= wallY and y != firstHole) or (y > wallY and y != secondHole): 
                 self.MazeArray[wallX][y] = self.MazeArray[wallX][y] | gl.WALL_EAST
-                if wallX < gl.MAZE_SIZE_X:
+                if wallX < self.__maze_size_x:
                     self.MazeArray[wallX+1][y] = self.MazeArray[wallX+1][y] | gl.WALL_WEST
 
         print()
@@ -272,8 +296,8 @@ class Maze(unittest.TestCase):
         Draw random maze
     """
     def __drawMaze(self):
-        for y in range(gl.MAZE_SIZE_Y):
-            for x in range(gl.MAZE_SIZE_X): # 0..9
+        for y in range(self.__maze_size_y):
+            for x in range(self.__maze_size_x): # 0..9
                 sys.stdout.write("+")
                 
                 if (self.MazeArray[x][y] & gl.WALL_NORTH) > 0:
@@ -286,21 +310,21 @@ class Maze(unittest.TestCase):
             print()
 
             # 2nd row
-            for x in range(gl.MAZE_SIZE_X):
+            for x in range(self.__maze_size_x):
                 if (self.MazeArray[x][y] & gl.WALL_WEST) > 0:
                     sys.stdout.write("| ")
                 else:
                     sys.stdout.write("  ")
 
-            if (self.MazeArray[gl.MAZE_SIZE_X-1][y] | gl.WALL_EAST) > 0:
+            if (self.MazeArray[self.__maze_size_x-1][y] | gl.WALL_EAST) > 0:
                 sys.stdout.write("|")
        
             print()
 
-        for x in range(gl.MAZE_SIZE_X): # 0..9
+        for x in range(self.__maze_size_x): # 0..9
             sys.stdout.write("+")
             
-            if (self.MazeArray[x][gl.MAZE_SIZE_Y-1] & gl.WALL_SOUTH) > 0:
+            if (self.MazeArray[x][self.__maze_size_y-1] & gl.WALL_SOUTH) > 0:
                 sys.stdout.write("-")
             else:
                 sys.stdout.write(" ")
@@ -313,7 +337,7 @@ class Maze(unittest.TestCase):
         Test creating persons
     """
     def test_createMaze(self):
-        self.createRandomMaze()
+        self.createRandomMaze(0.5)
         self.__drawMaze()
         self.__saveMaze()
         self.__loadMaze()
