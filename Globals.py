@@ -32,10 +32,14 @@ GONE_NORTH = 8
 GONE_STOP = 8
 GONE_ALL = 15
 
-MAZE_SIZE_X = 10
-MAZE_SIZE_Y = 10
-MIN_MAZE_SIZE_X = 1
-MIN_MAZE_SIZE_Y = 1
+MAX_MAZE_LEVEL = 10         # The maximum levels of the maze
+MIN_MAZE_LEVEL = 2          # The minimum levels of the maze
+MAZE_SIZE_X = 50            # The maximum size of the maze in X-direction
+MAZE_SIZE_Y = 50            # The maximum size of the maze in Y-direction
+MIN_MAZE_SIZE_X = 10        # The minimum size of the maze in X-direction
+MIN_MAZE_SIZE_Y = 10    
+MAX_MAZE_SIZE_X = 50        # The minimum size of the maze in X-direction
+MAX_MAZE_SIZE_Y = 50    
 
 LEAVE_OUT_X_1 = 0
 LEAVE_OUT_X_2 = 1
