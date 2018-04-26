@@ -16,6 +16,7 @@ from Entrance import Entrance
 import Globals as gl
 from _overlapped import NULL
 from sympy.stats.tests.test_continuous_rv import test_difficult_univariate
+from win32comext.shell.shellcon import GPS_BESTEFFORT
 
 __author__ = "Sven Eggert"
 __copyright__ = "Copyright 2018, Egertiko Designs"
@@ -191,22 +192,23 @@ class Maze(unittest.TestCase):
         bestWeight = 0.0
         for entrance in entrances:
             weight = entrance.getWeightedMeasure()
-            print(entrance.EntranceX, entrance.EntranceY, weight)
+            #print(entrance.EntranceX, entrance.EntranceY, weight)
             if weight > bestWeight:
                 bestEntrance = entrance
                 bestWeight = weight
                 
         print("Best entrance :", bestEntrance.EntranceFrom, bestEntrance.EntranceX, bestEntrance.EntranceY, bestWeight)
-            
-            
 
+        return bestEntrance
+    
     """
         Create an exit for the maze
         Entry function
     """
     def __createExitForMaze(self):
-        entrances = []
-        deadEnds = []
+        entrances = []          # All entrances of the maze
+        deadEnds = []           # All dead ends in the maze
+        bestEntrance = NULL     # The best entrance of the level of the maze
         
         # Entry from North
         y = 0
@@ -229,33 +231,38 @@ class Maze(unittest.TestCase):
             entrance = Entrance(x, y, gl.GONE_NORTH, deadEnds)
             entrances.append(entrance)
 
-        # Entry from South
-        x = gl.MAZE_SIZE_X - 1;
+        # Entry from East
+        x = self.__maze_size_x - 1;
         for y in range(0,self.__maze_size_y):
             deadEnds = self.__findPathInMaze(x,y, gl.GONE_SOUTH)
             entrance = Entrance(x, y, gl.GONE_NORTH, deadEnds)
             entrances.append(entrance)
 
-        self.__selectBestWeightedEntrance(entrances)
+        bestEntrance = self.__selectBestWeightedEntrance(entrances)
+        
+        return bestEntrance
         
     """
         Create a random maze
         private sub routine
     """
     def __createRandomMaze(self, chamberMinX, chamberMaxX, chamberMinY, chamberMaxY):        
+        #print(chamberMinX, chamberMaxX, chamberMinY, chamberMaxY)
+        
         # check minimum size of chamber
-        if (chamberMaxX - chamberMinX) < self.__maze_size_x:
+        if (chamberMaxX - chamberMinX) < gl.MIN_CHAMBER_SIZE_X:
             return
 
         # check minimum size of chamber
-        if (chamberMaxY - chamberMinY) < self.__maze_size_y:
+        if (chamberMaxY - chamberMinY) < gl.MIN_CHAMBER_SIZE_Y:
             return
 
         # Create two random walls
         wallX = randint(chamberMinX, chamberMaxX-1) # 0..8 -> 6
         wallY = randint(chamberMinY, chamberMaxY-1) # 0..8
 
-        logging.info("(%d, %d), (%d, %d), walls (%d, %d)", chamberMinX, chamberMinY, chamberMaxX, chamberMaxY, wallX, wallY)
+        #logging.info("(%d, %d), (%d, %d), walls (%d, %d)", chamberMinX, chamberMinY, chamberMaxX, chamberMaxY, wallX, wallY)
+        #print(chamberMinX, chamberMinY, chamberMaxX, chamberMaxY, wallX, wallY)
 
         # select a number between 0 and 3
         leaveOut = randint(0, 3) # 0..3
