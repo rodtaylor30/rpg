@@ -9,7 +9,7 @@
 import unittest
 
 __author__ = "Sven Eggert"
-__copyright__ = "Copyright 2018, Egertiko Designs"
+__copyright__ = "Copyright 2018"
 __credits__ = []
 __license__ = "GPL"
 __version__ = "0.0.1"
