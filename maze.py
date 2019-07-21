@@ -19,7 +19,7 @@ from sympy.stats.tests.test_continuous_rv import test_difficult_univariate
 from win32comext.shell.shellcon import GPS_BESTEFFORT
 
 __author__ = "Sven Eggert"
-__copyright__ = "Copyright 2018, Egertiko Designs"
+__copyright__ = "Copyright 2018"
 __credits__ = []
 __license__ = "GPL"
 __version__ = "0.0.1"
